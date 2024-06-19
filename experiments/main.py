@@ -52,7 +52,7 @@ def main(_):
 
     params = _CONFIG.value
 
-    params.device = 'cuda:7'
+    params.device = 'cuda:0'
 
     train_goals, _ = get_goals_and_targets(params)
 

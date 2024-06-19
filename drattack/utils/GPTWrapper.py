@@ -1,9 +1,10 @@
 import openai
 import time
+import os
 
-with open('../../api_keys/openai_key.txt') as file:
-    openai_key = file.read()
-openai.api_key = openai_key
+# with open('../../api_keys/openai_key.txt') as file:
+#     openai_key = file.read()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Define a wrapper around the GPT-4 API to match the interface you need.
 class GPTAPIWrapper:

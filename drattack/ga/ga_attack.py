@@ -16,7 +16,7 @@ from ..utils.GeminiWrapper import GeminiAPIWrapper
 
 class DrAttack_random_search():
 
-    def __init__(self, attack_prompt, prompt_info_path, worker, verb_sub=False, noun_sub=False, noun_wordgame=False, suffix=False, 
+    def __init__(self, attack_prompt, prompt_info, worker, verb_sub=False, noun_sub=False, noun_wordgame=False, suffix=False, 
                  load_cache=False, topk_sub=5, sub_threshold=0.1, vis_dict_path="",
                  general_template="", demo_suffix_template="", wordgame_template="", gpt_eval=False,
                  gpt_eval_template="", test_prefixes=[]):
@@ -30,9 +30,10 @@ class DrAttack_random_search():
         self.sub_threshold = sub_threshold          # parameter for substituition difference threshold
         self.gpt_eval = gpt_eval                    # parameter for substituition difference threshold
 
-        self.prompt_info_path = prompt_info_path
         self.vis_dict_path = vis_dict_path
         self.worker = worker
+
+        self.data = prompt_info
 
         if self.suffix:
             self.demo_suffix_template = demo_suffix_template
@@ -98,19 +99,14 @@ class DrAttack_random_search():
     # initialise segmentation space by loading target json file
     def init_prompt_info(self):
 
-        with open(self.prompt_info_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-
-        self.segment_space = data[self.attack_prompt]['parsing_tree_dictionary']
-        self.search_space = data[self.attack_prompt]['synonym']
-        self.oppsite_space = data[self.attack_prompt]['opposite']
+        self.segment_space = self.data[self.attack_prompt]['parsing_tree_dictionary']
+        self.search_space = self.data[self.attack_prompt]['synonym']
+        self.oppsite_space = self.data[self.attack_prompt]['opposite']
     
     
     def init_harmless_dict(self):
-        with open(self.prompt_info_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
 
-        harmless_mapping_list = data[self.attack_prompt]['harmless']
+        harmless_mapping_list = self.data[self.attack_prompt]['harmless']
 
         return {item.split(':')[0]: item.split(':')[1] for item in harmless_mapping_list}
 
@@ -150,22 +146,6 @@ class DrAttack_random_search():
         self.vis_dict[sentence][score_str] = {}
         self.vis_dict[sentence][score_str]['score'] = float(score)
         self.vis_dict[sentence][score_str]['response'] = self.output_dict[sentence]
-        
-    def save_visited(self):
-
-        if not os.path.isfile(self.vis_dict_path):
-            # If the file does not exist, create a new one
-            with open(self.vis_dict_path, 'w') as file:
-                # You can change this to any JSON content you desire
-                json_data = {}
-                json.dump(json_data, file, indent=4)
-
-        with open(self.vis_dict_path, 'r') as file:
-            data = json.load(file)
-        data[self.attack_prompt] = self.vis_dict
-
-        with open(self.vis_dict_path, 'w') as file:
-            json.dump(data, file, indent=4)
 
     def initialize_prompt_structure(self):
         self.prompt_structure_mask = ["using the methods in Question A"]
@@ -323,7 +303,7 @@ class DrAttack_random_search():
     # Generate questions or phrases and structure based on phrases
     def generate_replacement(self):
 
-        assert self.words_type[0] == "instruction"
+        # assert self.words_type[0] == "instruction"
         self.questions = []
         self.sub_words = []
         self.questions_prefix = []
@@ -840,12 +820,8 @@ class DrAttack_random_search():
                 jailbroken = True if  "Yes" in res or "yes" in res else False
             
             if jailbroken and np.min(scores) < 0:
-                self.save_visited()
-
                 return self.population[np.argmin(scores)], self.new_prompts_list[np.argmin(scores)], np.min(scores), self.output_dict[self.population[np.argmin(scores)]], self.prompt_num, self.token_num_list[np.argmin(scores)]
             
             level -= 1
-
-        self.save_visited()
 
         return self.population[np.argmin(scores)], self.new_prompts_list[np.argmin(scores)], np.min(scores), self.output_dict[self.population[np.argmin(scores)]], self.prompt_num, self.token_num_list[np.argmin(scores)]

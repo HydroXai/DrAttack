@@ -1,7 +1,9 @@
 import google.generativeai as genai
+import os
 
-with open('../../api_keys/google_api_key.txt') as file:
-    GOOGLE_API_KEY = file.read()
+# with open('../../api_keys/google_api_key.txt') as file:
+#     GOOGLE_API_KEY = file.read()
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 genai.configure(api_key=GOOGLE_API_KEY)
 

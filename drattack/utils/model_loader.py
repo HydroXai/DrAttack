@@ -156,3 +156,82 @@ def get_worker(params, eval=False):
                 None
             )
     return worker
+
+def get_model_path_and_template(model_name):
+    full_model_dict={
+        "gpt-4-0125-preview":{
+            "path":"gpt-4",
+            "template":"gpt-4"
+        },
+        "gpt-4-1106-preview":{
+            "path":"gpt-4",
+            "template":"gpt-4"
+        },
+        "gpt-4":{
+            "path":"gpt-4",
+            "template":"gpt-4"
+        },
+        "gpt-4-turbo":{
+            "path":"gpt-4-turbo",
+            "template":"gpt-4"
+        },
+        "gpt-3.5-turbo": {
+            "path":"gpt-3.5-turbo",
+            "template":"gpt-3.5-turbo"
+        },
+        "gpt-3.5-turbo-1106": {
+            "path":"gpt-3.5-turbo",
+            "template":"gpt-3.5-turbo"
+        },
+        "claude-instant-1":{
+            "path":"claude-instant-1",
+            "template":"claude-instant-1"
+        },
+        "claude-2":{
+            "path":"claude-2",
+            "template":"claude-2"
+        },
+        "palm-2":{
+            "path":"palm-2",
+            "template":"palm-2"
+        },
+        "claude-3-sonnet-20240229":{
+            "path":"claude-3-sonnet-20240229",
+            "template":"claude-3-sonnet-20240229"
+        },
+        "claude-3-haiku-20240307":{
+            "path":"claude-3-haiku-20240307",
+            "template":"claude-2"
+        },
+        "claude-3-opus-20240229":{
+            "path":"claude-3-opus-20240229",
+            "template":"claude-3-opus-20240229"
+        },
+        "gemini-pro": {
+            "path": "gemini-pro",
+            "template": "gemini-pro"
+        },
+        "/media/d1/huggingface.co/models/meta-llama/Llama-2-7b-chat-hf":{
+            "path":"/media/d1/huggingface.co/models/meta-llama/Llama-2-7b-chat-hf",
+            "template":"llama-2"
+        },
+        "/media/d1/huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2":{
+            "path":"/media/d1/huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+            "template":"mistral"
+        },
+        "/media/d1/huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct":{
+            "path":"/media/d1/huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct",
+            "template":"llama-2"
+        },
+        "/media/d1/huggingface.co/models/HuggingFaceM4/tiny-random-LlamaForCausalLM":{
+            "path":"media/d1/huggingface.co/models/HuggingFaceM4/tiny-random-LlamaForCausalLM",
+            "template":"llama-2"
+        },
+        "/media/d1/huggingface.co/models/meta-llama/LlamaGuard-7b":{
+            "path":"/media/d1/huggingface.co/models/meta-llama/LlamaGuard-7b",
+            "template":"llama-2"
+        }
+    }
+    assert model_name in full_model_dict, f"Model {model_name} not found in `full_model_dict` (available keys {full_model_dict.keys()})"
+    path, template = full_model_dict[model_name]["path"], full_model_dict[model_name]["template"]
+    return path, template    

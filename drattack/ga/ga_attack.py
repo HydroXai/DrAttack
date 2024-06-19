@@ -498,24 +498,25 @@ class DrAttack_random_search():
                 word_synonym_list = self.search_space[control_word]
 
                 word_synonym_list = word_synonym_list[:self.topk_sub]
-                sub_word_idx = self.sub_words.index(control_word)
+                if control_word in self.sub_words:
+                    sub_word_idx = self.sub_words.index(control_word)
 
-                # currently no cross generation
-                for word_synonym in word_synonym_list:
-                    sub_words = self.sub_words[:]
-                    sub_words[sub_word_idx] = word_synonym
+                    # currently no cross generation
+                    for word_synonym in word_synonym_list:
+                        sub_words = self.sub_words[:]
+                        sub_words[sub_word_idx] = word_synonym
 
-                    prompt_synonym = orig_prompt.replace(self.sub_words[sub_word_idx], word_synonym)
+                        prompt_synonym = orig_prompt.replace(self.sub_words[sub_word_idx], word_synonym)
 
-                    prompt_synonym_embed = self.text_embedding_ada.get_embedding(prompt_synonym)[0][0].float()
+                        prompt_synonym_embed = self.text_embedding_ada.get_embedding(prompt_synonym)[0][0].float()
 
-                    # similarity for thresholding
-                    similarity = sum([self.process_and_score(prompt_synonym_embed, orig_prompt, fn) for fn in self.process_fns_self]) + 1
+                        # similarity for thresholding
+                        similarity = sum([self.process_and_score(prompt_synonym_embed, orig_prompt, fn) for fn in self.process_fns_self]) + 1
 
-                    if self.word_to_string(sub_words) not in self.population and similarity <= self.sub_threshold:
-                        
-                        orig_prompt = (" ").join(self.words)
-                        self.population.append(self.word_to_string(sub_words))
+                        if self.word_to_string(sub_words) not in self.population and similarity <= self.sub_threshold:
+                            
+                            orig_prompt = (" ").join(self.words)
+                            self.population.append(self.word_to_string(sub_words))
             else:
                 print("search space missing key word")
 

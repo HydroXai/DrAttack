@@ -18,86 +18,55 @@ class ModelWorker(object):
                 model_path,
                 torch_dtype=torch.float16,
                 trust_remote_code=True,
+                device_map="auto",
                 **model_kwargs
-            ).to(device).eval()
+            )
             self.tokenizer = tokenizer
             self.conv_template = conv_template
-            self.tasks = mp.JoinableQueue()
-            self.results = mp.JoinableQueue()
-            self.process = None
         elif "llama" in model_path:
             self.model_name = "llama"
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_path,
                 torch_dtype=torch.float16,
                 trust_remote_code=True,
+                device_map="auto",
                 **model_kwargs
-            ).to(device).eval()
+            )
             self.tokenizer = tokenizer
             self.conv_template = conv_template
-            self.tasks = mp.JoinableQueue()
-            self.results = mp.JoinableQueue()
-            self.process = None
         elif "gpt" in model_path:
             self.model_name = "gpt"
-            self.model = GPTAPIWrapper(model = model_path) # gpt-3.5-turbo
+            self.model = GPTAPIWrapper(model=model_path)  # gpt-3.5-turbo
             self.tokenizer = lambda x: x
             self.conv_template = "You are a helpful assistant."
-            self.tasks = mp.JoinableQueue()
-            self.results = mp.JoinableQueue()
-            self.process = None
         elif "gemini" in model_path:
             self.model_name = "gemini"
-            self.model = GeminiAPIWrapper(model_name = model_path) # gemini
+            self.model = GeminiAPIWrapper(model_name=model_path)  # gemini
             self.tokenizer = lambda x: x
             self.conv_template = "You are a helpful assistant."
-            self.tasks = mp.JoinableQueue()
-            self.results = mp.JoinableQueue()
-            self.process = None
-    
-    @staticmethod
-    def run(model, tasks, results):
-        while True:
-            task = tasks.get()
-            if task is None:
-                break
-            ob, fn, args, kwargs = task
-            if fn == "grad":
-                with torch.enable_grad():
-                    results.put(ob.grad(*args, **kwargs))
-            else:
-                with torch.no_grad():
-                    if fn == "logits":
-                        results.put(ob.logits(*args, **kwargs))
-                    elif fn == "contrast_logits":
-                        results.put(ob.contrast_logits(*args, **kwargs))
-                    elif fn == "test":
-                        results.put(ob.test(*args, **kwargs))
-                    elif fn == "test_loss":
-                        results.put(ob.test_loss(*args, **kwargs))
-                    else:
-                        results.put(fn(*args, **kwargs))
-            tasks.task_done()
 
-    def start(self):
-        self.process = mp.Process(
-            target=ModelWorker.run,
-            args=(self.model, self.tasks, self.results)
-        )
-        self.process.start()
-        print(f"Started worker {self.process.pid} for model {self.model.name_or_path}")
-        return self
-    
+    def run_task(self, ob, fn, *args, **kwargs):
+        if fn == "grad":
+            with torch.enable_grad():
+                return ob.grad(*args, **kwargs)
+        else:
+            with torch.no_grad():
+                if fn == "logits":
+                    return ob.logits(*args, **kwargs)
+                elif fn == "contrast_logits":
+                    return ob.contrast_logits(*args, **kwargs)
+                elif fn == "test":
+                    return ob.test(*args, **kwargs)
+                elif fn == "test_loss":
+                    return ob.test_loss(*args, **kwargs)
+                else:
+                    return fn(*args, **kwargs)
+
     def stop(self):
-        self.tasks.put(None)
-        if self.process is not None:
-            self.process.join()
         torch.cuda.empty_cache()
-        return self
 
     def __call__(self, ob, fn, *args, **kwargs):
-        self.tasks.put((deepcopy(ob), fn, args, kwargs))
-        return self
+        return self.run_task(deepcopy(ob), fn, *args, **kwargs)
 
 def get_worker(params, eval=False):
 
@@ -134,27 +103,24 @@ def get_worker(params, eval=False):
         conv_template = raw_conv_template
         print(f"Loaded conversation template")
         worker = ModelWorker(
-                params.model_path,
-                params.model_kwarg,
-                tokenizer,
-                conv_template,
-                params.device
-            )
-
-        if not eval:
-            worker.start()
+            params.model_path,
+            params.model_kwarg,
+            tokenizer,
+            conv_template,
+            params.device
+        )
 
         print('Loaded target LLM model')
     
     else:
         tokenizer = [None]
         worker = ModelWorker(
-                params.model_path,
-                None,
-                None,
-                None,
-                None
-            )
+            params.model_path,
+            None,
+            None,
+            None,
+            None
+        )
     return worker
 
 def get_model_path_and_template(model_name):

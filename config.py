@@ -17,15 +17,11 @@ def get_config():
     config.n_train_data = 1
     config.data_offset = 0
 
-    # logfile
-    config.result_prefix = ''
-
     # new attack-related parameters
     config.verb_sub = True
     config.noun_sub = True
     config.noun_wordgame = False
     config.suffix = True
-    config.load_cache = False
     config.perturbance = False
     config.general_reconstruction = False
     config.gpt_eval = False
